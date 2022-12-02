@@ -166,85 +166,92 @@ def adv_search():
             continue
 
 def add_record():
-    print("추가 =======================================================")
-    print("1. 행성 추가")
-    print("2. 위성 추가")
-    print("3. 관측 가능 시간 추가")
-    print("4. 관측회 스케줄 추가")
-    print("5. 관측회 참석자 추가")
-    print("0. 뒤로")
-    command = int(input())
-    if command == 1:
-        name = input("새로운 행성 이름 : ")
-        orbital = input("공전 주기(년) : ")
-        radius = input("지름(km) : ")
-        distance = input("지구로부터의 거리(AU) : ")
-        print("이름 : "+ name + "/공전 주기: "+ orbital +"년/지름 : "+ radius +"km/ 거리 : "+ distance +"AU")
-        confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
-        if confirm == 'Y':
-            query = "INSERT INTO PLANET VALUES(\'"+name+"\',"+orbital+","+radius+","+distance+")"
-            fetch_db(query)
-            print("행성 추가 완료!")
+    while(True):
+        print("추가 =======================================================")
+        print("1. 행성 추가")
+        print("2. 위성 추가")
+        print("3. 관측 가능 시간 추가")
+        print("4. 관측회 스케줄 추가")
+        print("5. 관측회 참석자 추가")
+        print("0. 뒤로")
+        command = int(input())
+        if command == 1:
+            name = input("새로운 행성 이름 : ")
+            orbital = input("공전 주기(년) : ")
+            radius = input("지름(km) : ")
+            distance = input("지구로부터의 거리(AU) : ")
+            print("이름 : "+ name + "/공전 주기: "+ orbital +"년/지름 : "+ radius +"km/ 거리 : "+ distance +"AU")
+            confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
+            if confirm == 'Y':
+                query = "INSERT INTO PLANET VALUES(\'"+name+"\',"+orbital+","+radius+","+distance+")"
+                fetch_db(query)
+                print("행성 추가 완료!")
+            else:
+                print("취소되었습니다.")
+        
+        if command == 2:
+            name = input("새로운 위성 이름 : ")
+            orbital = input("공전 주기(일) : ")
+            radius = input("지름(km) : ")
+            distance = input("행성으로부터의 거리(km) : ")
+            planet = input("공전하는 행성 : ")
+            print("이름 : "+ name + "/공전 주기: "+ orbital +"년/지름 : "+ radius +"km/ 거리 : "+ distance +"AU/행성 : "+planet)
+            confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
+            if confirm == 'Y':
+                query = "INSERT INTO SATELITE VALUES(\'"+name+"\',"+orbital+","+radius+","+distance+","+planet+")"
+                fetch_db(query)
+                print("위성 추가 완료!")
+            else:
+                print("취소되었습니다.")
+        
+        if command == 3:
+            planet = input("관측할 행성 : ")
+            time = input("관측가능 시간 (YYYY-MM-DD) : ")
+            length = input("관측가능 기간(일) : ")
+            no = input("기간 번호 : ")
+            print("관측 행성 : "+ planet + "/시간: "+ time +"/기간 : "+ length +"일/ID : "+ no)
+            confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
+            if confirm == 'Y':
+                query = "INSERT INTO OBSERVABLE_TIME VALUES("+no+",STR_TO_DATE(\'"+time+"\',\'%%Y-%%m-%%d\'),"+length+",\'"+planet+"\')"
+                fetch_db(query)
+                print("관측 가능 기간 추가 완료!")
+            else:
+                print("취소되었습니다.")
+        
+        if command == 4:
+            planet = input("관측할 행성 : ")
+            time = input("관측할 시간 (YYYY-MM-DD) : ")
+            location = input("관측할 장소 : ")
+            sch_no = input("스케줄 번호 : ")
+            planet = input("공전하는 행성 : ")
+            print("관측 행성 : "+ planet + "/시간: "+ time +"/장소 : "+ location +"/ID : "+ sch_no)
+            confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
+            if confirm == 'Y':
+                query = "INSERT INTO OBSERVATION_SCHEDULE VALUES("+sch_no+",STR_TO_DATE(\'"+time+"\',\'%%Y-%%m-%%d\'),\'"+location+"\',\'"+planet+"\')"
+                fetch_db(query)
+                print("스케줄 추가 완료!")
+            else:
+                print("취소되었습니다.")
+        
+        if command == 5:
+            sch_no = input("참가할 관측회 ID : ")
+            name = input("참가자 이름 : ")
+            part_no = input("참가자 ID : ")
+            print("관측회 ID : "+sch_no+"/이름 : "+name+"/참가자 ID : "+part_no)
+            confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
+            if confirm == 'Y':
+                query = "INSERT INTO PARTICIPANTS VALUES("+part_no+",\""+name+"\","+sch_no+")"
+                fetch_db(query)
+                print("참가자 추가 완료!")
+            else:
+                print("취소되었습니다.")
+        
+        elif command == 0:
+                break
         else:
-            print("취소되었습니다.")
+            print("알 수 없는 커맨드입니다.")
+            continue
     
-    if command == 2:
-        name = input("새로운 위성 이름 : ")
-        orbital = input("공전 주기(일) : ")
-        radius = input("지름(km) : ")
-        distance = input("행성으로부터의 거리(km) : ")
-        planet = input("공전하는 행성 : ")
-        print("이름 : "+ name + "/공전 주기: "+ orbital +"년/지름 : "+ radius +"km/ 거리 : "+ distance +"AU/행성 : "+planet)
-        confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
-        if confirm == 'Y':
-            query = "INSERT INTO SATELITE VALUES(\'"+name+"\',"+orbital+","+radius+","+distance+","+planet+")"
-            fetch_db(query)
-            print("위성 추가 완료!")
-        else:
-            print("취소되었습니다.")
-    
-    if command == 3:
-        planet = input("관측할 행성 : ")
-        time = input("관측가능 시간 (YYYY-MM-DD) : ")
-        length = input("관측가능 기간(일) : ")
-        no = input("기간 번호 : ")
-        print("관측 행성 : "+ planet + "/시간: "+ time +"/기간 : "+ length +"일/ID : "+ no)
-        confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
-        if confirm == 'Y':
-            query = "INSERT INTO OBSERVABLE_TIME VALUES("+no+",STR_TO_DATE(\'"+time+"\',\'%%Y-%%m-%%d\'),"+length+",\'"+planet+"\')"
-            fetch_db(query)
-            print("관측 가능 기간 추가 완료!")
-        else:
-            print("취소되었습니다.")
-    
-    if command == 4:
-        planet = input("관측할 행성 : ")
-        time = input("관측할 시간 (YYYY-MM-DD) : ")
-        location = input("관측할 장소 : ")
-        sch_no = input("스케줄 번호 : ")
-        planet = input("공전하는 행성 : ")
-        print("관측 행성 : "+ planet + "/시간: "+ time +"/장소 : "+ location +"/ID : "+ sch_no)
-        confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
-        if confirm == 'Y':
-            query = "INSERT INTO OBSERVATION_SCHEDULE VALUES("+sch_no+",STR_TO_DATE(\'"+time+"\',\'%%Y-%%m-%%d\'),\'"+location+"\',\'"+planet+"\')"
-            fetch_db(query)
-            print("스케줄 추가 완료!")
-        else:
-            print("취소되었습니다.")
-    
-    if command == 5:
-        sch_no = input("참가할 관측회 ID : ")
-        name = input("참가자 이름 : ")
-        part_no = input("참가자 ID : ")
-        print("관측회 ID : "+sch_no+"/이름 : "+name+"/참가자 ID : "+part_no)
-        confirm = input("위 내용이 맞습니까? (맞을 경우 'Y' 입력)")
-        if confirm == 'Y':
-            query = "INSERT INTO PARTICIPANTS VALUES("+part_no+",\""+name+"\","+sch_no+")"
-            fetch_db(query)
-            print("참가자 추가 완료!")
-        else:
-            print("취소되었습니다.")
-
 def delete_record():
     print("삭제 =======================================================")
     print("1. 행성 삭제")
@@ -269,7 +276,7 @@ while(True):
     elif command == 3:
         add_record()
     elif command == 4:
-        pass
+        delete_record()
     elif command == 0:
         break
     else:
