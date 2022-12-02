@@ -1,13 +1,20 @@
 from datetime import timedelta
+import datetime
+import time
 import pymysql
 db = pymysql.connect(host='192.168.59.4', user='Seonyul', password = '1234', db = 'astrolabe', charset='utf8',port=4567)
 cur = db.cursor()
 
 query = " "
 
+def fetch_db(query):
+    cur.execute(query)
+    db.commit()
+    return cur.fetchall()
+
 def search():
     while(True):
-        print("검색 =======================================================")
+        print("\n검색 =======================================================")
         print("1. 이름으로 행성 찾기")
         print("2. 이름으로 위성 찾기")
         print("3. 행성 별 관측 가능 시간")
@@ -18,9 +25,7 @@ def search():
         if command == 1:
             name = input("찾으려는 행성 이름 입력 : ")
             query = "SELECT * FROM PLANET WHERE Name = \"" + name + "\""
-            cur.execute(query)
-            db.commit()
-            fetched = cur.fetchall()
+            fetched = fetch_db(query)
             if len(fetched) == 0:
                 print("검색 결과가 없습니다.")
             else:
@@ -33,9 +38,7 @@ def search():
         elif command == 2:
             name = input("찾으려는 위성 이름 입력 : ")
             query = "SELECT * FROM SATELITE WHERE Name = \"" + name + "\""
-            cur.execute(query)
-            db.commit()
-            fetched = cur.fetchall()
+            fetched = fetch_db(query)
             if len(fetched) == 0:
                 print("검색 결과가 없습니다.")
             else:
@@ -49,9 +52,7 @@ def search():
         elif command == 3:
             name = input("관측하려는 행성 이름 입력 : ")
             query = "SELECT * FROM OBSERVABLE_TIME WHERE Planet_name = \"" + name + "\""
-            cur.execute(query)
-            db.commit()
-            fetched = cur.fetchall()
+            fetched = fetch_db(query)
             if len(fetched) == 0:
                 print("검색 결과가 없습니다.")
             else:
@@ -62,9 +63,7 @@ def search():
         elif command == 4:
             name = input("관측하려는 행성 이름 입력 : ")
             query = "SELECT * FROM OBSERVATION_SCHEDULE WHERE Planet_name = \"" + name + "\""
-            cur.execute(query)
-            db.commit()
-            fetched = cur.fetchall()
+            fetched = fetch_db(query)
             if len(fetched) == 0:
                 print("검색 결과가 없습니다.")
             else:
@@ -75,9 +74,7 @@ def search():
         elif command == 5:
             sch_no = input("관측회 ID 입력 : ")
             query = "SELECT * FROM PARTICIPANTS WHERE Sch_no = \"" + sch_no + "\""
-            cur.execute(query)
-            db.commit()
-            fetched = cur.fetchall()
+            fetched = fetch_db(query)
             if len(fetched) == 0:
                 print("검색 결과가 없습니다.")
             else:
@@ -91,15 +88,83 @@ def search():
             print("알 수 없는 커맨드입니다.")
             continue
 
-
 def adv_search():
-    print("고급 검색 =======================================================")
-    print("1. 행성으로 위성 찾기")
-    print("2. 특정 날짜에 관측 가능한 행성 찾기")
-    print("3. 관측회에서 관측 가능한 다른 행성 찾기")
-    print("4. 1명이 참석하는 모든 관측회 찾기")
-    print("5. 1명이 관측할 수 있는 모든 행성 찾기")
-    print("0. 뒤로")
+    while(True):
+        print("\n고급 검색 =======================================================")
+        print("1. 행성으로 위성 찾기")
+        print("2. 특정 날짜에 관측 가능한 행성 찾기")
+        print("3. 관측회에서 관측 가능한 모든 행성 찾기")
+        print("4. 1명이 참석하는 모든 관측회 찾기")
+        print("5. 1명이 관측할 수 있는 모든 행성 찾기")
+        print("0. 뒤로")
+        command = int(input())
+
+        if command == 1:
+            name = input("위성을 찾으려는 행성 이름 입력 : ")
+            query = "SELECT Satelite_name FROM SATELITE WHERE Planet_name = \"" + name + "\""
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("존재하지 않는 행성이거나, 행성의 위성이 없습니다.")
+            else:
+                print(name+"이(가) 가지고 있는 위성 목록 :")
+                for result in fetched:
+                    print(result[0])
+        
+        elif command == 2:
+            date = input("대상 날짜 입력 (YYYY-MM-DD): " )
+            query = "SELECT P.Name, O.Time, O.Length_day FROM PLANET P, OBSERVABLE_TIME O WHERE O.Planet_name = P.Name AND \'"\
+                 +date+"\' BETWEEN O.Time AND DATE_ADD(O.Time, INTERVAL O.Length_day DAY)"
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 날짜에 볼 수 있는 행성이 없습니다.")
+            else:
+                print(date, "에 관측할 수 있는 행성")
+                for result in fetched:
+                    print(result[0], ": ", result[1] , "부터" , result[1] + timedelta(days=result[2]) , "까지")
+        
+        elif command == 3:
+            sch_no = input("관측회 스케줄 ID 입력 : ")
+            sub_query = "SELECT Time FROM OBSERVATION_SCHEDULE WHERE Sch_no = "+str(sch_no)
+            query = "SELECT P.Name, O.Time, O.Length_day, OT.Time FROM PLANET P, OBSERVABLE_TIME O, ("+ sub_query +") OT WHERE O.Planet_name = P.Name AND \
+                 OT.Time BETWEEN O.Time AND DATE_ADD(O.Time, INTERVAL O.Length_day DAY)"
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("존재하지 않는 관측회거나, 이때 관측가능한 행성이 없습니다.")
+            else:
+                print(sch_no, "번 관측회 (", fetched[0][3], ")에 관측할 수 있는 모든 행성")
+                for result in fetched:
+                    print(result[0], ": ", result[1] , "부터" , result[1] + timedelta(days=result[2]) , "까지")
+        
+        elif command == 4:
+            name = input("검색할 참가자 이름 입력 : ")
+            query = "SELECT O.Sch_no, O.Time, O.Location, O.Planet_name FROM OBSERVATION_SCHEDULE O, PARTICIPANTS P WHERE O.Sch_no = P.Sch_no AND P.Part_name = \"" + name + "\""
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 참가자가 참가하는 관측회가 없습니다.")
+            else:
+                print(name, "이(가) 참가하는 모든 관측회")
+                for result in fetched:
+                    print("ID :", result[0], "시간 :", result[1] , ", 장소 :" , result[2], ", 관측 행성 :", result[3])
+        
+        elif command == 5:
+            name = input("검색할 참가자 이름 입력 : ")
+            sub_query = "SELECT OB.Time FROM OBSERVATION_SCHEDULE OB, PARTICIPANTS PA WHERE OB.Sch_no = PA.Sch_no AND PA.Part_name = \"" + name + "\""
+            query = "SELECT P.Name, OT.Time FROM PLANET P, OBSERVABLE_TIME O, ("+ sub_query +") OT WHERE O.Planet_name = P.Name AND \
+                 OT.Time BETWEEN O.Time AND DATE_ADD(O.Time, INTERVAL O.Length_day DAY)"
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 참가자가 참가하는 관측회가 없습니다.")
+            else:
+                print(name, "이(가) 관측할 수 있는 행성")
+                for result in fetched:
+                    print(result[0], ": ", result[1], "에 관측 가능")    
+            
+        elif command == 0:
+            break
+        else:
+            print("알 수 없는 커맨드입니다.")
+            continue
+
 
 def add_record():
     print("추가 =======================================================")
