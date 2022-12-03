@@ -12,6 +12,15 @@ def fetch_db(query):
     db.commit()
     return cur.fetchall()
 
+def check(db_name, p_name, att = "Planet_name"):
+    local_query = "SELECT COUNT(*) FROM "+db_name+" WHERE "+att+" = \"" + p_name +"\""
+    cur.execute(local_query)
+    db.commit()
+    if cur.fetchall()[0][0] > 0:
+        return True
+    else:
+        return False
+
 def search():
     while(True):
         print("\n검색 =======================================================")
@@ -253,14 +262,134 @@ def add_record():
             continue
     
 def delete_record():
-    print("삭제 =======================================================")
-    print("1. 행성 삭제")
-    print("2. 위성 삭제")
-    print("3. 관측 가능 시간 삭제")
-    print("4. 관측회 스케줄 삭제")
-    print("5. 관측회 참석자 삭제")
-    print("0. 뒤로")   
+    while(True):
+        print("삭제 =======================================================")
+        print("1. 행성 삭제")
+        print("2. 위성 삭제")
+        print("3. 관측 가능 시간 삭제")
+        print("4. 관측회 스케줄 삭제")
+        print("5. 관측회 참석자 삭제")
+        print("0. 뒤로")
+        command = int(input())
 
+        if command == 1:
+            query = "SELECT Name FROM PLANET"
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("행성 데이터가 없습니다.")
+                continue
+            print("현재 저장된 행성 목록")
+            names = []
+            for result in fetched:
+                names.append(result[0])
+            print(*names)
+            name = input("삭제할 행성의 이름 입력 :")
+            if name in names:
+                can_delete = True
+                if check("SATELITE", name):
+                    print("위성이 있는 행성은 삭제할 수 없습니다.")
+                    can_delete = False
+                if check("OBSERVABLE_TIME", name):
+                    print("관측 가능 시간이 있는 행성은 삭제할 수 없습니다.")
+                    can_delete = False
+                if check("OBSERVATION_SCHEDULE", name):
+                    print("관측회 일정이 있는 행성은 삭제할 수 없습니다.")
+                    can_delete = False
+                if can_delete:
+                    query = "DELETE FROM PLANET WHERE Name = \""+name+"\""
+                    fetch_db(query)
+                    print("행성 삭제 완료!")
+            else:
+                print("해당하는 행성이 없습니다.")
+        
+        if command == 2:
+            query = "SELECT Satelite_name FROM SATELITE"
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("위성 데이터가 없습니다.")
+                continue
+            print("현재 저장된 위성 목록")
+            names = []
+            for result in fetched:
+                names.append(result[0])
+            print(*names)
+            name = input("삭제할 위성의 이름 입력 :")
+            if name in names:
+                query = "DELETE FROM SATELITE WHERE Satelite_name = \""+name+"\""
+                fetch_db(query)
+                print("위성 삭제 완료!")
+            else:
+                print("해당하는 위성이 없습니다.")
+        
+        if command == 3:
+            name = input("관측 대상 행성 이름 입력 : ")
+            query = "SELECT * FROM OBSERVABLE_TIME WHERE Planet_name = \""+name+"\""
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 행성의 관측 시간 데이터가 없습니다.")
+                continue
+            print("현재 저장된 관측 시간 목록")
+            numbers = []
+            for result in fetched:
+                numbers.append(result[0])
+                print(result[0], ". ", result[1] , "부터" , result[1] + timedelta(days=result[2]) , "까지")
+            number = input("삭제할 시간의 번호 입력 :")
+            if int(number) in numbers:
+                query = "DELETE FROM OBSERVABLE_TIME WHERE Time_no = "+number
+                fetch_db(query)
+                print("시간 삭제 완료!")
+            else:
+                print("해당하는 시간이 없습니다.")
+            
+        if command == 4:
+            name = input("관측 대상 행성 이름 입력 : ")
+            query = "SELECT * FROM OBSERVATION_SCHEDULE WHERE Planet_name = \""+name+"\""
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 행성의 관측회 일정 데이터가 없습니다.")
+                continue
+            print("현재 저장된 관측회 일정 목록")
+            numbers = []
+            for result in fetched:
+                numbers.append(result[0])
+                print("ID :", result[0], "시간 :", result[1] , ", 장소 :" , result[2])
+            number = input("삭제할 관측회의 번호 입력 : ")
+            if int(number) in numbers:
+                if check("PARTICIPANTS", number, "Sch_no"):
+                    print("참가자가 있는 관측회는 삭제할 수 없습니다.")
+                    continue
+                query = "DELETE FROM OBSERVATION_SCHEDULE WHERE Sch_no = "+number
+                fetch_db(query)
+                print("일정 삭제 완료!")
+            else:
+                print("해당하는 시간이 없습니다.")
+
+        if command == 5:
+            sch_no = input("관측회의 ID 입력 : ")
+            query = "SELECT * FROM PARTICIPANTS WHERE Sch_no = \"" + sch_no + "\""
+            fetched = fetch_db(query)
+            if len(fetched) == 0:
+                print("해당 관측회의 참가자가 없습니다.")
+                continue
+            print("현재 저장된 참가자 목록")
+            numbers = []
+            for result in fetched:
+                numbers.append(result[0])
+                print("ID :", result[0], "이름 :", result[1])
+            number = input("삭제할 참가자의 번호 입력 : ")
+            if int(number) in numbers:
+                query = "DELETE FROM PARTICIPANTS WHERE Part_no = " + number
+                fetch_db(query)
+                print("참가자 삭제 완료!")
+            else:
+                print("해당하는 참가자가 없습니다.")
+
+        elif command == 0:
+            return
+        else:
+            print("알 수 없는 커맨드입니다.")
+            continue
+            
 while(True):
     print("커맨드 선택 =======================================================")
     print("1. 검색")
@@ -282,14 +411,3 @@ while(True):
     else:
         print("알 수 없는 커맨드입니다.")
         continue
-
-
-query = input("\n\nEnter Query... (type 'exit' to exit)\n")
-if query == "exit":
-    pass
-cur.execute(query)
-db.commit()
-result = cur.fetchall()
-for data in result:
-    print(*data)
-
