@@ -1,6 +1,4 @@
 from datetime import timedelta
-import datetime
-import time
 import pymysql
 db = pymysql.connect(host='192.168.59.4', user='Seonyul', password = '1234', db = 'astrolabe', charset='utf8',port=4567)
 cur = db.cursor()
